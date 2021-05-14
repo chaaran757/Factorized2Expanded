@@ -64,7 +64,7 @@ def count_parameters(model):
 print(f'The model has {count_parameters(transformer):,} trainable parameters')
 
 for i in range(NUM_EPOCHS):
-    print(train_epoch(transformer, train_loader, optimizer))
+    print(train_epoch(transformer, train_loader, optimizer, loss_fn))
     
 torch.save(transformer, "model_transformer.pt")
     
