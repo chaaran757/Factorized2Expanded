@@ -16,7 +16,8 @@ def train(model, train_loader, criterion, optimizer, tf_prob, mapping_dict):
             factorized_data = factorized_data.to(device)
             expanded_data = expanded_data.to(device)
     
-            char_probs = model(factorized_data, factorized_data_lens, expanded_data, tf_prob, mapping_dict, 'greedy')
+            char_probs = model(factorized_data, factorized_data_lens, expanded_data, tf_prob, mapping_dict, 'greedy') #Mistake
+            #char_probs = model(factorized_data, factorized_data_lens, expanded_data[:, :-1], tf_prob, mapping_dict, 'greedy')
             char_probs = torch.stack(char_probs, dim=2)
             
             mask = torch.zeros([len(expanded_data_lens), expanded_data_lens.max()-1],dtype = torch.bool)
