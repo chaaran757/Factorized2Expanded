@@ -33,3 +33,38 @@ def train_epoch(model, train_iter, optimizer, loss_fn):
         losses += loss.item()
         
     return losses / len(train_iter)
+
+def greedy_decode(model, src, src_mask, max_len, start_symbol, mapping_dict):
+    src = src.to(device)
+    src_mask = src_mask.to(device)
+
+    memory = model.encode(src, src_mask)
+    ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(device)
+    
+    for i in range(max_len-1):
+        memory = memory.to(device)
+        memory_mask = torch.zeros(ys.shape[0], memory.shape[0]).to(device).type(torch.bool)
+        tgt_mask = (generate_square_subsequent_mask(ys.size(0))
+                                    .type(torch.bool)).to(device)
+        out = model.decode(ys, memory, tgt_mask)
+        out = out.transpose(0, 1)
+        prob = model.generator(out[:, -1])
+        _, next_word = torch.max(prob, dim = 1)
+        next_word = next_word.item()
+
+        ys = torch.cat([ys,
+                        torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=0)
+        if next_word == mapping_dict['end']:
+            break
+    return ys
+
+
+def expand(model, src, mapping_dict, inv_mapping_dict):
+    model.eval()
+    num_tokens = len(src)
+    
+    src = (torch.LongTensor(src).reshape(num_tokens, 1) )
+    src_mask = (torch.zeros(num_tokens, num_tokens)).type(torch.bool)
+    tgt_tokens = greedy_decode(model, src, src_mask, 29, mapping_dict['start'], mapping_dict).flatten().cpu().numpy()
+    
+    return " ".join([inv_mapping_dict[tok] for tok in tgt_tokens]).replace("start", "").replace("end", "")
